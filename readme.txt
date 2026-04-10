@@ -114,6 +114,12 @@ Google Calendar export is available in the PRO version.
 
 == Changelog ==
 
+= 4.1.0 =
+* Security hardening for admin AJAX handlers (capability + nonce checks).
+* Improved input sanitation for AJAX payloads.
+* Removed debug logging statements from production handlers.
+* Minor database operation fixes for admin access management.
+
 = 1.0.0 =
 * Initial release
 * Hourly booking system

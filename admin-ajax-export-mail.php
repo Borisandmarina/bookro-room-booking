@@ -22,23 +22,20 @@ defined('ABSPATH') || exit;
    add_action('wp_ajax_br_toggle_client_emails', 'br_toggle_client_emails');
 
 function br_toggle_client_emails() {
- error_log('BR_TOGGLE_CLIENT_EMAILS: HANDLER ENTERED');
-    if ( ! current_user_can('manage_options') ) {
-        wp_send_json_error('Access denied');
+    br_admin_ajax_guard();
+
+    if ( ! isset( $_POST['disabled'] ) ) {
+        wp_send_json_error( 'Missing parameter' );
     }
 
-    if ( ! isset($_POST['disabled']) ) {
-        wp_send_json_error('Missing parameter');
-    }
-
-    $disabled = (int) $_POST['disabled'];
-error_log('BR_TOGGLE_CLIENT_EMAILS: VALUE = ' . $disabled);
+    $disabled = (int) wp_unslash( $_POST['disabled'] );
     // 0 = emails enabled, 1 = emails disabled
-    update_option('br_disable_client_emails', $disabled);
- error_log('BR_TOGGLE_CLIENT_EMAILS: OPTION SAVED');
-    wp_send_json_success([
-     'disabled' => $disabled   
-    ]);
+    update_option( 'br_disable_client_emails', $disabled );
+    wp_send_json_success(
+        [
+            'disabled' => $disabled,
+        ]
+    );
 }
 
    
@@ -55,12 +52,13 @@ error_log('BR_TOGGLE_CLIENT_EMAILS: VALUE = ' . $disabled);
 add_action('wp_ajax_br_get_admins_for_object', 'br_get_admins_for_object');
 
 function br_get_admins_for_object() {
+    br_admin_ajax_guard();
 
     global $wpdb;
 
-    $object_id = (int) ($_POST['object_id'] ?? 0);
-    if ($object_id <= 0) {
-        wp_send_json_success([]);
+    $object_id = isset( $_POST['object_id'] ) ? (int) wp_unslash( $_POST['object_id'] ) : 0;
+    if ( $object_id <= 0 ) {
+        wp_send_json_success( [] );
     }
 
     $table_contacts = esc_sql( $wpdb->prefix . '1br_admin_contacts' );
@@ -102,6 +100,7 @@ wp_send_json_success($admins);
 add_action('wp_ajax_br_add_admin_to_object_partial', 'br_add_admin_to_object_partial');
 
 function br_add_admin_to_object_partial() {
+    br_admin_ajax_guard();
 
     global $wpdb;
 
@@ -109,8 +108,8 @@ function br_add_admin_to_object_partial() {
 	$table_links    = esc_sql( $wpdb->prefix . '1br_admin_contact_objects' );
 
 
-    $object_id = (int) ($_POST['object_id'] ?? 0);
-    $email     = sanitize_email($_POST['email'] ?? '');
+    $object_id = isset( $_POST['object_id'] ) ? (int) wp_unslash( $_POST['object_id'] ) : 0;
+    $email     = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
 
     if ($object_id <= 0 || $email === '') {
         wp_send_json_error('Invalid data');
@@ -182,6 +181,7 @@ $exists = (int) $wpdb->get_var(
 add_action('wp_ajax_br_get_partial_access_table', 'br_get_partial_access_table');
 
 function br_get_partial_access_table() {
+    br_admin_ajax_guard();
 
     global $wpdb;
 
@@ -190,8 +190,8 @@ function br_get_partial_access_table() {
 	$table_objects  = esc_sql( $wpdb->prefix . '1br_objects' );
 
 
-    $sort = $_POST['sort'] ?? 'object';
-$dir  = ($_POST['dir'] ?? 'asc');
+    $sort = isset( $_POST['sort'] ) ? sanitize_key( wp_unslash( $_POST['sort'] ) ) : 'object';
+    $dir  = isset( $_POST['dir'] ) ? sanitize_key( wp_unslash( $_POST['dir'] ) ) : 'asc';
 
 $allowed_sort = [
     'object'    => 'o.name',
@@ -281,6 +281,7 @@ $order_sql = esc_sql( $sort_column . ' ' . $sort_dir );
 add_action('wp_ajax_br_get_full_access_table', 'br_get_full_access_table');
 
 function br_get_full_access_table() {
+    br_admin_ajax_guard();
 
     global $wpdb;
 
@@ -375,6 +376,7 @@ function br_get_full_access_table() {
 add_action('wp_ajax_br_get_admins_for_full_access', 'br_get_admins_for_full_access');
 
 function br_get_admins_for_full_access() {
+    br_admin_ajax_guard();
 
     global $wpdb;
 
@@ -428,6 +430,7 @@ function br_get_admins_for_full_access() {
 add_action('wp_ajax_br_add_admin_to_all_objects', 'br_add_admin_to_all_objects');
 
 function br_add_admin_to_all_objects() {
+    br_admin_ajax_guard();
 
     global $wpdb;
 
@@ -435,7 +438,7 @@ function br_add_admin_to_all_objects() {
 	$table_objects = esc_sql( $wpdb->prefix . '1br_objects' );
 
 
-    $email = sanitize_email($_POST['email'] ?? '');
+    $email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
     if ($email === '') {
         wp_send_json_error('Invalid email');
     }
@@ -467,13 +470,11 @@ function br_add_admin_to_all_objects() {
     }
 
     // 1) удаляем ВСЕ существующие привязки администратора к объектам
-    $wpdb->delete(
-        $table_admins,
-        [
-            'email'     => $email,
-            'object_id' => ['>', 0],
-        ],
-        ['%s', '%d']
+    $wpdb->query(
+        $wpdb->prepare(
+            "DELETE FROM {$table_admins} WHERE email = %s AND object_id > 0",
+            $email
+        )
     );
 
     // 2) добавляем привязки ко ВСЕМ объектам
@@ -506,11 +507,12 @@ function br_add_admin_to_all_objects() {
 add_action('wp_ajax_br_delete_admin_partial', 'br_delete_admin_partial');
 
 function br_delete_admin_partial() {
+    br_admin_ajax_guard();
 
     global $wpdb;
 
-    $email     = sanitize_email($_POST['email'] ?? '');
-    $object_id = (int) ($_POST['object_id'] ?? 0);
+    $email     = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+    $object_id = isset( $_POST['object_id'] ) ? (int) wp_unslash( $_POST['object_id'] ) : 0;
 
     if ($email === '' || $object_id <= 0) {
         wp_send_json_error('Invalid data');
@@ -561,13 +563,14 @@ $admin_id = (int) $wpdb->get_var(
 add_action('wp_ajax_br_delete_admin_full', 'br_delete_admin_full');
 
 function br_delete_admin_full() {
+    br_admin_ajax_guard();
 
     global $wpdb;
 
     $table = esc_sql( $wpdb->prefix . '1br_admin_contacts' );
 
 
-    $email = sanitize_email($_POST['email'] ?? '');
+    $email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
 
     if ($email === '') {
         wp_send_json_error('Invalid email');

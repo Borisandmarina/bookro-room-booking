@@ -22,21 +22,21 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function br_admin_ajax_guard() {
 
-    // 1️⃣ Проверка прав — ОБЯЗАТЕЛЬНО
-    if ( ! current_user_can('manage_options') ) {
-        wp_send_json_error('Access denied', 403);
+    // Проверка прав — ОБЯЗАТЕЛЬНО.
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( 'Access denied', 403 );
     }
 
-    // 2️⃣ Если nonce передан — проверяем
-    if ( isset($_POST['_wpnonce']) ) {
-
-        if ( ! wp_verify_nonce($_POST['_wpnonce'], 'br_admin_nonce') ) {
-            wp_send_json_error('Invalid nonce', 403);
-        }
-
+    // Для админских AJAX nonce обязателен.
+    if ( ! isset( $_POST['_wpnonce'] ) ) {
+        wp_send_json_error( 'Missing nonce', 403 );
     }
 
-    // Если nonce не передан — не блокируем
+    $nonce = sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) );
+
+    if ( ! wp_verify_nonce( $nonce, 'br_admin_nonce' ) ) {
+        wp_send_json_error( 'Invalid nonce', 403 );
+    }
 }
 
 
@@ -3250,7 +3250,6 @@ add_action('admin_enqueue_scripts', function ($hook) {
     );
 
 });
-
 
 
 
