@@ -49,9 +49,9 @@ function br_ajax_has_available_day() {
         wp_send_json_error( 'Missing params' );
     }
 
-    $object_id      = (int) $_POST['object_id'];
-    $date           = sanitize_text_field( $_POST['date'] );
-    $duration_slots = (int) $_POST['duration_slots'];
+    $object_id = absint( wp_unslash( $_POST['object_id'] ) );
+$date = sanitize_text_field( wp_unslash( $_POST['date'] ) );
+$duration_slots = absint( wp_unslash( $_POST['duration_slots'] ) );
 
     if ( $object_id <= 0 || $duration_slots <= 0 ) {
         wp_send_json_error( 'Invalid params' );
@@ -92,9 +92,9 @@ function br_get_available_start_slots() {
         wp_send_json_error('Missing params');
     }
 
-    $object_id = (int) $_POST['object_id'];
-    $date      = sanitize_text_field($_POST['date']);
-    $duration  = (int) $_POST['duration_slots'];
+    $object_id = absint( wp_unslash( $_POST['object_id'] ) );
+$date      = sanitize_text_field( wp_unslash( $_POST['date'] ) );
+$duration  = absint( wp_unslash( $_POST['duration_slots'] ) );
 
     // используем существующий READ-ONLY расчёт
     $available_slots = br_calc_get_available_start_slots(
@@ -143,10 +143,10 @@ function br_ajax_get_available_dates() {
         wp_send_json_error('Missing params');
     }
 
-    $object_id = (int) $_POST['object_id'];
-    $year      = (int) $_POST['year'];
-    $month     = (int) $_POST['month'];
-    $duration  = (int) $_POST['duration_slots'];
+    $object_id = absint( wp_unslash( $_POST['object_id'] ) );
+$year      = absint( wp_unslash( $_POST['year'] ) );
+$month     = absint( wp_unslash( $_POST['month'] ) );
+$duration  = absint( wp_unslash( $_POST['duration_slots'] ) );
 
     if ( $object_id <= 0 || $year < 2000 || $month < 1 || $month > 12 || $duration <= 0 ) {
         wp_send_json_error('Invalid params');
@@ -201,8 +201,8 @@ function br_ajax_get_available_days_horizon() {
         wp_send_json_error('Missing params');
     }
 
-    $object_id = (int) $_POST['object_id'];
-    $duration  = (int) $_POST['duration_slots'];
+    $object_id = absint( wp_unslash( $_POST['object_id'] ) );
+$duration  = absint( wp_unslash( $_POST['duration_slots'] ) );
 
     if ($object_id <= 0 || $duration <= 0) {
         wp_send_json_error('Invalid params');

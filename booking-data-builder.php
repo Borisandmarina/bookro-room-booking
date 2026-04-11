@@ -40,11 +40,13 @@ function br_build_booking_data( array $raw ) {
        1. Базовые значения из формы
        ======================================================== */
 
-    $object_id = (int) ($raw['object_id'] ?? 0);
+    $object_id = isset( $raw['object_id'] )
+    ? absint( $raw['object_id'] )
+    : 0;
 
-$event_date_raw = sanitize_text_field(
-    trim($raw['event_date'] ?? '')
-);
+$event_date_raw = isset( $raw['event_date'] )
+    ? sanitize_text_field( trim( $raw['event_date'] ) )
+    : '';
 
 $event_date = null;
 
@@ -59,8 +61,13 @@ if ($event_date_raw !== '') {
 }
 
 
-    $slot_start      = (int) ($raw['slot_start'] ?? 0);
-    $duration_slots  = (int) ($raw['duration_slots'] ?? 0);
+    $slot_start = isset( $raw['slot_start'] )
+    ? absint( $raw['slot_start'] )
+    : 0;
+
+$duration_slots = isset( $raw['duration_slots'] )
+    ? absint( $raw['duration_slots'] )
+    : 0;
 
     $slot_end = $slot_start + $duration_slots;
 
@@ -81,15 +88,17 @@ $interval2_slots      = $duration_slots;
    4. Параметры мероприятия (шаг 2)
    ======================================================== */
 
-$event_type_raw    = $raw['event_type_id'] ?? '';
+$event_type_raw = isset( $raw['event_type_id'] )
+    ? sanitize_text_field( $raw['event_type_id'] )
+    : '';
 $event_type_id     = 0; // IMPORTANT: default = 0, NOT NULL
 $event_type_custom = null;
 
 if ($event_type_raw === 'other') {
 
-    $event_type_custom = sanitize_text_field(
-    trim($raw['event_type_other'] ?? '')
-);
+    $event_type_custom = isset( $raw['event_type_other'] )
+    ? sanitize_text_field( trim( $raw['event_type_other'] ) )
+    : '';
 
 
     if ($event_type_custom === '') {
@@ -99,7 +108,7 @@ if ($event_type_raw === 'other') {
 
 } else {
 
-    $event_type_id = (int) $event_type_raw;
+    $event_type_id = absint( $event_type_raw );
     $event_type_custom = null;
 }
 
@@ -107,27 +116,43 @@ if ($event_type_raw === 'other') {
        5. Клиент (шаг 3)
        ======================================================== */
 
-    $client_name     = sanitize_text_field( trim($raw['client_name'] ?? '') );
-	$client_surname  = sanitize_text_field( trim($raw['client_surname'] ?? '') );
-	$client_company  = sanitize_text_field( trim($raw['client_company'] ?? '') );
-	$client_phone    = sanitize_text_field( trim($raw['client_phone'] ?? '') );
-	$client_email    = sanitize_email( trim($raw['client_email'] ?? '') );
+    $client_name = isset( $raw['client_name'] )
+    ? sanitize_text_field( trim( wp_unslash( $raw['client_name'] ) ) )
+    : '';
+
+$client_surname = isset( $raw['client_surname'] )
+    ? sanitize_text_field( trim( wp_unslash( $raw['client_surname'] ) ) )
+    : '';
+
+$client_company = isset( $raw['client_company'] )
+    ? sanitize_text_field( trim( wp_unslash( $raw['client_company'] ) ) )
+    : '';
+
+$client_phone = isset( $raw['client_phone'] )
+    ? sanitize_text_field( trim( wp_unslash( $raw['client_phone'] ) ) )
+    : '';
+
+$client_email = isset( $raw['client_email'] )
+    ? sanitize_email( trim( wp_unslash( $raw['client_email'] ) ) )
+    : '';
 
 	
 	/* ========================================================
 	   5.1 Дополнительные параметры формы
 	   ======================================================== */
 
-	$visitors_count_id = (int) ($raw['visitors_count_id'] ?? 0);
+	$visitors_count_id = isset( $raw['visitors_count_id'] )
+    ? absint( $raw['visitors_count_id'] )
+    : 0;
 
 	$services_ids = isset($raw['services']) && is_array($raw['services'])
-		? array_map('intval', $raw['services'])
-		: [];
+    ? array_map('absint', $raw['services'])
+    : [];
 
 
-	$order_comment = sanitize_textarea_field(
-    trim($raw['additional_info'] ?? '')
-);
+	$order_comment = isset( $raw['additional_info'] )
+    ? sanitize_textarea_field( trim( $raw['additional_info'] ) )
+    : '';
 
 
 

@@ -16,10 +16,7 @@
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-/*
-clear child float (pika-lendar), using the famous micro clearfix hack
-http://nicolasgallagher.com/micro-clearfix-hack/
-*/
+
 .pika-single:before,
 .pika-single:after {
     content: " ";

@@ -19,15 +19,18 @@ require_once BR_PLUGIN_PATH . 'admin-bookings-query.php';
  */
 function br_bookings_ajax_guard() {
 
-    if ( ! current_user_can('manage_options') ) {
-        wp_send_json_error(['message' => 'Access denied'], 403);
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( [ 'message' => 'Access denied' ], 403 );
     }
 
-    if (
-        empty($_POST['_wpnonce']) ||
-        ! wp_verify_nonce($_POST['_wpnonce'], 'br_bookings_bulk_action')
-    ) {
-        wp_send_json_error(['message' => 'Invalid nonce'], 403);
+    if ( ! isset( $_POST['_wpnonce'] ) ) {
+        wp_send_json_error( [ 'message' => 'Invalid nonce' ], 403 );
+    }
+
+    $nonce = sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) );
+
+    if ( ! wp_verify_nonce( $nonce, 'br_bookings_bulk_action' ) ) {
+        wp_send_json_error( [ 'message' => 'Invalid nonce' ], 403 );
     }
 }
 
@@ -36,14 +39,16 @@ function br_bookings_ajax_guard() {
  */
 function br_get_booking_ids_from_request(): array {
 
-    if ( empty($_POST['booking_ids']) || ! is_array($_POST['booking_ids']) ) {
+    if ( empty( $_POST['booking_ids'] ) || ! is_array( $_POST['booking_ids'] ) ) {
         return [];
     }
 
+    $booking_ids = wp_unslash( $_POST['booking_ids'] );
+
     return array_values(
         array_filter(
-            array_map('intval', $_POST['booking_ids']),
-            fn($id) => $id > 0
+            array_map( 'absint', $booking_ids ),
+            fn( $id ) => $id > 0
         )
     );
 }
@@ -60,7 +65,9 @@ add_action('wp_ajax_br_bookings_bulk_status', function () {
     br_bookings_ajax_guard();
 
     $booking_ids = br_get_booking_ids_from_request();
-    $new_status  = sanitize_text_field($_POST['new_status'] ?? '');
+    $new_status  = isset( $_POST['new_status'] )
+    ? sanitize_text_field( wp_unslash( $_POST['new_status'] ) )
+    : '';
 
     if ( empty($booking_ids) ) {
         wp_send_json_error(['message' => 'No bookings selected']);
@@ -144,37 +151,54 @@ add_action('wp_ajax_br_bookings_filter', function () {
 
     global $wpdb;
 
-    $object_id = (int) ($_POST['object_id'] ?? 0);
-    if ($object_id <= 0) {
-        wp_send_json_error(['message' => 'Invalid object_id'], 400);
-    }
+    $object_id = isset( $_POST['object_id'] )
+    ? absint( wp_unslash( $_POST['object_id'] ) )
+    : 0;
 
-    // даты: DD.MM.YYYY → Y-m-d
-    $date_from = '';
-    if (!empty($_POST['date_from'])) {
-        $dt = DateTime::createFromFormat('d.m.Y', $_POST['date_from']);
-        if ($dt) {
-            $date_from = $dt->format('Y-m-d');
-        }
-    }
+if ( $object_id <= 0 ) {
+    wp_send_json_error( [ 'message' => 'Invalid object_id' ], 400 );
+}
 
-    $date_to = '';
-    if (!empty($_POST['date_to'])) {
-        $dt = DateTime::createFromFormat('d.m.Y', $_POST['date_to']);
-        if ($dt) {
-            $date_to = $dt->format('Y-m-d');
-        }
+// даты: DD.MM.YYYY → Y-m-d
+$date_from = '';
+if ( ! empty( $_POST['date_from'] ) ) {
+    $date_from_raw = sanitize_text_field( wp_unslash( $_POST['date_from'] ) );
+    $dt = DateTime::createFromFormat( 'd.m.Y', $date_from_raw );
+    if ( $dt ) {
+        $date_from = $dt->format( 'Y-m-d' );
     }
+}
 
-    $args = [
-        'object_id'     => $object_id,
-        'status_filter' => $_POST['status'] ?? 'all',
-        'date_from'     => $date_from,
-        'date_to'       => $date_to,
-        'client_search' => trim($_POST['client'] ?? ''),
-        'company_filter'=> !empty($_POST['company']) ? 'exact' : '',
-        'company_value' => trim($_POST['company'] ?? ''),
-    ];
+$date_to = '';
+if ( ! empty( $_POST['date_to'] ) ) {
+    $date_to_raw = sanitize_text_field( wp_unslash( $_POST['date_to'] ) );
+    $dt = DateTime::createFromFormat( 'd.m.Y', $date_to_raw );
+    if ( $dt ) {
+        $date_to = $dt->format( 'Y-m-d' );
+    }
+}
+
+$status_filter = isset( $_POST['status'] )
+    ? sanitize_text_field( wp_unslash( $_POST['status'] ) )
+    : 'all';
+
+$client_search = isset( $_POST['client'] )
+    ? trim( sanitize_text_field( wp_unslash( $_POST['client'] ) ) )
+    : '';
+
+$company_value = isset( $_POST['company'] )
+    ? trim( sanitize_text_field( wp_unslash( $_POST['company'] ) ) )
+    : '';
+
+$args = [
+    'object_id'      => $object_id,
+    'status_filter'  => $status_filter,
+    'date_from'      => $date_from,
+    'date_to'        => $date_to,
+    'client_search'  => $client_search,
+    'company_filter' => $company_value !== '' ? 'exact' : '',
+    'company_value'  => $company_value,
+];
 
     $rows = br_get_bookings($args);
 

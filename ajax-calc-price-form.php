@@ -22,25 +22,41 @@ function br_calculate_rental_price( array $data ) {
 
     global $wpdb;
 
-    $object_id       = (int) ($data['object_id'] ?? 0);
-    $duration        = (int) ($data['duration_slots'] ?? 0);
-    $slot_start      = (int) ($data['slot_start'] ?? 0);
-    $event_date_raw  = $data['event_date'] ?? '';
-    $visitors_id     = (int) ($data['visitors_count_id'] ?? 0);
-    $services_ids    = $data['services'] ?? [];
+    $object_id = isset( $data['object_id'] )
+        ? absint( $data['object_id'] )
+        : 0;
+
+    $duration = isset( $data['duration_slots'] )
+        ? absint( $data['duration_slots'] )
+        : 0;
+
+    $slot_start = isset( $data['slot_start'] )
+        ? absint( $data['slot_start'] )
+        : 0;
+
+    $event_date_raw = isset( $data['event_date'] )
+        ? sanitize_text_field( trim( $data['event_date'] ) )
+        : '';
+
+    $visitors_id = isset( $data['visitors_count_id'] )
+        ? absint( $data['visitors_count_id'] )
+        : 0;
+
+    $services_ids = isset( $data['services'] ) && is_array( $data['services'] )
+        ? array_map( 'absint', $data['services'] )
+        : [];
 
     if ( ! $object_id || ! $duration || ! $event_date_raw ) {
         return 0.0;
     }
 
     // Нормализация даты
-    $timestamp = strtotime($event_date_raw);
+    $timestamp = strtotime( $event_date_raw );
     if ( ! $timestamp ) {
         return 0.0;
     }
 
-    $event_date = wp_date('Y-m-d', $timestamp);
-
+    $event_date = wp_date( 'Y-m-d', $timestamp );
 
     /* ========================================================
        BASE RATE (WORKDAY)
@@ -75,10 +91,10 @@ function br_calculate_rental_price( array $data ) {
         ARRAY_A
     );
 
-    $weekday = wp_date('l', strtotime($event_date));
+    $weekday = wp_date( 'l', strtotime( $event_date ) );
 
     $weekends = $settings && $settings['weekends']
-        ? array_map('trim', explode(',', $settings['weekends']))
+        ? array_map( 'trim', explode( ',', $settings['weekends'] ) )
         : [];
 
     /* ========================================================
@@ -119,7 +135,7 @@ function br_calculate_rental_price( array $data ) {
             $current_rate = $holiday_rate;
         }
 
-    } elseif ( in_array($weekday, $weekends, true) ) {
+    } elseif ( in_array( $weekday, $weekends, true ) ) {
 
         $weekend_rate = (float) $wpdb->get_var(
             $wpdb->prepare(
@@ -165,16 +181,16 @@ function br_calculate_rental_price( array $data ) {
        ======================================================== */
     $base_total = $rate_with_visitors * $duration;
 
-   /* ========================================================
+    /* ========================================================
        SERVICES
        ======================================================== */
     $services_total = 0.0;
 
-    if ( is_array($services_ids) && $services_ids ) {
+    if ( is_array( $services_ids ) && $services_ids ) {
 
-        $ids = array_map('intval', $services_ids);
+        $ids = array_map( 'absint', $services_ids );
 
-        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 
         $rows = $wpdb->get_results(
             $wpdb->prepare(
@@ -196,7 +212,6 @@ function br_calculate_rental_price( array $data ) {
                 $services_total += (float) $row['price'];
             }
         }
-
     }
 
     return round(
@@ -204,8 +219,6 @@ function br_calculate_rental_price( array $data ) {
         2
     );
 }
-
-
 
 /**
  * ============================================================
@@ -216,21 +229,26 @@ add_action('wp_ajax_br_calculate_price', 'br_ajax_calculate_price');
 add_action('wp_ajax_nopriv_br_calculate_price', 'br_ajax_calculate_price');
 
 function br_ajax_calculate_price() {
-if (
-    isset($_POST['_wpnonce']) &&
-    ! wp_verify_nonce($_POST['_wpnonce'], 'br_calculate_price_nonce')
-) {
-    wp_send_json_error('Invalid nonce');
-}
 
-
+    if (
+        isset( $_POST['_wpnonce'] ) &&
+        ! wp_verify_nonce(
+            sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ),
+            'br_calculate_price_nonce'
+        )
+    ) {
+        wp_send_json_error( 'Invalid nonce' );
+    }
 
     global $wpdb;
 
-    $data = $_POST ?? [];
-    $object_id = (int) ($data['object_id'] ?? 0);
+    $data = wp_unslash( $_POST );
 
-    $total = br_calculate_rental_price($data);
+    $object_id = isset( $data['object_id'] )
+        ? absint( $data['object_id'] )
+        : 0;
+
+    $total = br_calculate_rental_price( $data );
 
     $currency = '';
     if ( $object_id ) {
@@ -246,7 +264,7 @@ if (
     }
 
     wp_send_json_success([
-        'total'    => number_format($total, 2, '.', ''),
+        'total'    => number_format( $total, 2, '.', '' ),
         'currency' => $currency
     ]);
 }

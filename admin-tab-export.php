@@ -16,45 +16,40 @@ defined('ABSPATH') || exit;
 global $wpdb;
 
 $current_user_id = get_current_user_id();
+wp_add_inline_style(
+    'br-admin',
+    '
+    .br-export-wrapper {
+        max-width: 1100px;
+    }
+
+    .br-export-block {
+        background: #ffffff;
+        border: 1px solid #ccd0d4;
+        padding: 20px 24px;
+        margin-bottom: 20px;
+    }
+
+    .br-export-block h3 {
+        margin-top: 0;
+        margin-bottom: 12px;
+        font-size: 18px;
+        color: #2271b1;
+    }
+
+    .br-export-block p {
+        margin: 0;
+        color: #555;
+        font-size: 14px;
+    }
+
+    .form-table td {
+        padding: 5px 5px;
+    }
+    '
+);
 
 ?>
-
-<style>
-/* ============================================================
-   EXPORT TAB — LAYOUT
-   ============================================================ */
-
-.br-export-wrapper {
-    max-width: 1100px;
-}
-
-/* ============================================================
-   EXPORT BLOCK (WHITE CARD)
-   ============================================================ */
-
-.br-export-block {
-    background: #ffffff;
-    border: 1px solid #ccd0d4;
-    padding: 20px 24px;
-    margin-bottom: 20px;
-}
-
-.br-export-block h3 {
-    margin-top: 0;
-    margin-bottom: 12px;
-    font-size: 18px;
-    color: #2271b1;
-}
-
-.br-export-block p {
-    margin: 0;
-    color: #555;
-    font-size: 14px;
-}
-.form-table td {
-     padding: 5px 5px;
-}
-</style>
 
 <?php
 /* сохранить выбранный объект */
@@ -117,7 +112,3 @@ $current_object_id = isset($_GET['object_id']) && (int) $_GET['object_id'] > 0
 <?php require BR_PLUGIN_PATH . 'admin-block-export-mail.php'; ?>
 
 </div>
-
-
-
-

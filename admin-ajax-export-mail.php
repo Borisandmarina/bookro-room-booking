@@ -31,7 +31,7 @@ function br_toggle_client_emails() {
         wp_send_json_error('Missing parameter');
     }
 
-    $disabled = (int) $_POST['disabled'];
+    $disabled = absint( wp_unslash( $_POST['disabled'] ) );
 error_log('BR_TOGGLE_CLIENT_EMAILS: VALUE = ' . $disabled);
     // 0 = emails enabled, 1 = emails disabled
     update_option('br_disable_client_emails', $disabled);
@@ -58,7 +58,7 @@ function br_get_admins_for_object() {
 
     global $wpdb;
 
-    $object_id = (int) ($_POST['object_id'] ?? 0);
+    $object_id = absint( wp_unslash( $_POST['object_id'] ?? 0 ) );
     if ($object_id <= 0) {
         wp_send_json_success([]);
     }
@@ -109,8 +109,8 @@ function br_add_admin_to_object_partial() {
 	$table_links    = esc_sql( $wpdb->prefix . '1br_admin_contact_objects' );
 
 
-    $object_id = (int) ($_POST['object_id'] ?? 0);
-    $email     = sanitize_email($_POST['email'] ?? '');
+    $object_id = absint( wp_unslash( $_POST['object_id'] ?? 0 ) );
+    $email     = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
 
     if ($object_id <= 0 || $email === '') {
         wp_send_json_error('Invalid data');
@@ -190,8 +190,8 @@ function br_get_partial_access_table() {
 	$table_objects  = esc_sql( $wpdb->prefix . '1br_objects' );
 
 
-    $sort = $_POST['sort'] ?? 'object';
-$dir  = ($_POST['dir'] ?? 'asc');
+    $sort = sanitize_key( wp_unslash( $_POST['sort'] ?? 'object' ) );
+$dir  = sanitize_key( wp_unslash( $_POST['dir'] ?? 'asc' ) );
 
 $allowed_sort = [
     'object'    => 'o.name',
@@ -210,7 +210,19 @@ $order_sql = esc_sql( $sort_column . ' ' . $sort_dir );
 
 
 
-    $rows = $wpdb->get_results(
+    $sort = sanitize_key( wp_unslash( $_POST['sort'] ?? 'object' ) );
+$dir  = sanitize_key( wp_unslash( $_POST['dir'] ?? 'asc' ) );
+
+if ( ! in_array( $sort, [ 'object', 'last_name' ], true ) ) {
+    $sort = 'object';
+}
+
+if ( ! in_array( $dir, [ 'asc', 'desc' ], true ) ) {
+    $dir = 'asc';
+}
+
+$rows = $wpdb->get_results(
+    $wpdb->prepare(
         "
         SELECT
             o.name AS object_name,
@@ -225,10 +237,23 @@ $order_sql = esc_sql( $sort_column . ' ' . $sort_dir );
             ON ac.id = l.admin_contact_id
         INNER JOIN {$table_objects} o
             ON o.id = l.object_id
-        ORDER BY {$order_sql}
+        ORDER BY
+            CASE WHEN %s = 'object' AND %s = 'asc'  THEN o.name END ASC,
+            CASE WHEN %s = 'object' AND %s = 'desc' THEN o.name END DESC,
+            CASE WHEN %s = 'last_name' AND %s = 'asc'  THEN ac.last_name END ASC,
+            CASE WHEN %s = 'last_name' AND %s = 'desc' THEN ac.last_name END DESC
         ",
-        ARRAY_A
-    );
+        $sort,
+        $dir,
+        $sort,
+        $dir,
+        $sort,
+        $dir,
+        $sort,
+        $dir
+    ),
+    ARRAY_A
+);
 
     ob_start();
 
@@ -435,7 +460,7 @@ function br_add_admin_to_all_objects() {
 	$table_objects = esc_sql( $wpdb->prefix . '1br_objects' );
 
 
-    $email = sanitize_email($_POST['email'] ?? '');
+    $email = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
     if ($email === '') {
         wp_send_json_error('Invalid email');
     }
@@ -509,8 +534,8 @@ function br_delete_admin_partial() {
 
     global $wpdb;
 
-    $email     = sanitize_email($_POST['email'] ?? '');
-    $object_id = (int) ($_POST['object_id'] ?? 0);
+    $email     = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
+    $object_id = absint( wp_unslash( $_POST['object_id'] ?? 0 ) );
 
     if ($email === '' || $object_id <= 0) {
         wp_send_json_error('Invalid data');
@@ -567,7 +592,7 @@ function br_delete_admin_full() {
     $table = esc_sql( $wpdb->prefix . '1br_admin_contacts' );
 
 
-    $email = sanitize_email($_POST['email'] ?? '');
+    $email = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
 
     if ($email === '') {
         wp_send_json_error('Invalid email');

@@ -1,10 +1,10 @@
 === BookRo Room Booking ===
 Contributors: borisdevin
-Tags: booking, room booking, conference room, calendar, schedule, reservation, meeting room, hourly booking, event booking
+Tags: booking, room booking, calendar, reservation, meeting room
 Requires at least: 6.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 4.1.0
+Stable tag: 4.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,11 +12,11 @@ Conference room booking plugin based on hourly time slots with visual daily sche
 
 == Description ==
 
-Booking Room is a professional conference room booking plugin built around hourly time slots and a visual daily schedule timeline.
+BookRo Room Booking is a conference room booking plugin built around hourly time slots and a visual daily schedule timeline.
 
 It allows administrators to manage bookings, working hours, breaks and pricing directly from the WordPress dashboard, while users can book rooms through a simple frontend form.
 
-= Key Features (Lite) =
+= Key Features =
 
 * Visual daily timeline (24 hourly slots)
 * Booking management table
@@ -42,35 +42,11 @@ Place it on any page to display the booking form.
 
 = Pricing Model =
 
-The Lite version includes base rental rate support.
-
-Advanced pricing coefficients are available in the PRO version.
-
-== Upgrade to PRO ==
-
-The PRO version extends Booking Room with advanced functionality:
-
-* Unlimited objects (multiple rooms)
-* Visitors count with pricing coefficient
-* Additional services (hourly and one-time)
-* Advanced pricing coefficients:
-  - Time of day
-  - Weekend
-  - Holiday
-  - Participant-based
-  - Service-based
-  - Combined coefficients
-* Holiday management with allow_booking control
-* Google Sheets export
-* Google Calendar export
-* Telegram export
-* Advanced tariff management
-
-Some advanced features are available in the PRO version.
+The plugin includes base rental rate support.
 
 == Privacy & Data Handling ==
 
-Booking Room stores booking and contact information in custom database tables.
+BookRo Room Booking stores booking and contact information in custom database tables.
 
 Personal contact data is stored in:
 
@@ -80,12 +56,21 @@ Personal contact data is stored in:
 
 When the plugin is deleted from WordPress (Delete action, not just Deactivate), all personal contact data stored in these tables is permanently removed from the database.
 
+== External Services ==
+
+= Email notifications =
+
+This plugin sends booking notifications using the standard WordPress email system (`wp_mail`).
+
+Email delivery depends on the hosting provider or configured SMTP service.
+
+No data is transmitted to third-party services by default.
+
 == Frequently Asked Questions ==
 
 = Does the plugin support multiple rooms? =
 
-The Lite version supports one object (room).  
-The PRO version supports unlimited rooms.
+This version supports one object (room).
 
 = How are time slots calculated? =
 
@@ -94,10 +79,6 @@ The plugin uses 24 hourly slots per day by default.
 = Does uninstall remove data? =
 
 Yes. When the plugin is deleted, personal contact data tables are automatically removed.
-
-= Does it support Google Calendar? =
-
-Google Calendar export is available in the PRO version.
 
 == Screenshots ==
 
@@ -110,7 +91,6 @@ Google Calendar export is available in the PRO version.
 7. Event types management
 8. Export interface
 9. Users management
-10. PRO features preview
 
 == Changelog ==
 

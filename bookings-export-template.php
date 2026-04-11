@@ -72,9 +72,11 @@ if (empty($bookings)) {
 
             <td>
 <?php
+$export_timezone = ! empty( $object_timezone ) ? $object_timezone : 'UTC';
+
 $dt = new DateTimeImmutable(
     $row['event_date'],
-    new DateTimeZone($object_timezone ?: 'UTC')
+    new DateTimeZone( $export_timezone )
 );
 
 echo esc_html( $dt->format('d.m.Y') );
@@ -98,7 +100,7 @@ echo esc_html( $dt->format('d.m.Y') );
             <td><?php echo esc_html($participants_label); ?></td>
             <td><?php echo esc_html(implode(', ', $service_labels)); ?></td>
 
-            <td><?php echo number_format((float) $row['price_net'], 2); ?></td>
+            <td><?php echo esc_html( number_format( (float) $row['price_net'], 2 ) ); ?></td>
 
             <td>
                 <?php echo esc_html(

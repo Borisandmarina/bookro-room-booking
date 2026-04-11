@@ -19,13 +19,14 @@ if ( ! defined('ABSPATH') ) {
 add_action('wp_ajax_br_get_global_settings', 'br_get_global_settings');
 
 function br_get_global_settings() {
+    br_admin_ajax_guard();
     global $wpdb;
 
-    if ( ! isset($_POST['object_id']) ) {
-        wp_send_json_error('Missing object_id');
+    if ( ! isset( $_POST['object_id'] ) ) {
+        wp_send_json_error( 'Missing object_id' );
     }
 
-    $object_id = (int) $_POST['object_id'];
+    $object_id = absint( wp_unslash( $_POST['object_id'] ) );
 
     // гарантируем существование строки глобальных настроек
     $exists = $wpdb->get_var(
@@ -75,15 +76,16 @@ function br_get_global_settings() {
 add_action('wp_ajax_br_save_global_setting', 'br_save_global_setting');
 
 function br_save_global_setting() {
+    br_admin_ajax_guard();
     global $wpdb;
 
-    if ( ! isset($_POST['object_id'], $_POST['field'], $_POST['value']) ) {
-        wp_send_json_error('Missing params');
+    if ( ! isset( $_POST['object_id'], $_POST['field'], $_POST['value'] ) ) {
+        wp_send_json_error( 'Missing params' );
     }
 
-    $object_id = (int) $_POST['object_id'];
-    $field     = sanitize_text_field($_POST['field']);
-    $value     = sanitize_text_field($_POST['value']);
+    $object_id = absint( wp_unslash( $_POST['object_id'] ) );
+    $field     = sanitize_text_field( wp_unslash( $_POST['field'] ) );
+    $value     = sanitize_text_field( wp_unslash( $_POST['value'] ) );
 
 
     /* ============================================================
@@ -97,7 +99,7 @@ function br_save_global_setting() {
     );
 
     if ( ! $exists ) {
-        $wpdb->insert(
+                $wpdb->insert(
             $wpdb->prefix . '1br_global_settings',
             [
                 'object_id'        => $object_id,
@@ -106,7 +108,7 @@ function br_save_global_setting() {
                 'timezone'         => 'UTC',
                 'weekends'         => '0'
             ],
-            ['%d','%d','%d','%d','%s','%s']
+            ['%d','%d','%d','%s','%s']
         );
     }
 

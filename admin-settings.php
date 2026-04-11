@@ -90,7 +90,7 @@ $current_object = $wpdb->get_row(
                         <?php selected( $obj['id'], $current_object_id ); ?>>
                         <?php
                             echo esc_html( $obj['name'] );
-                            echo esc_html( strtoupper( $var ) );
+							echo ' [' . esc_html( strtoupper( (string) $obj['status'] ) ) . ']';
 
                         ?>
                     </option>

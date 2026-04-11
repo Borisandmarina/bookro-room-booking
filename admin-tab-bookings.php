@@ -23,11 +23,17 @@ $current_user_id = get_current_user_id();
 /* ============================================================
  * Save selected object
  * ============================================================ */
-if ( isset($_GET['object_id']) && (int) $_GET['object_id'] > 0 ) {
+$get_object_id = 0;
+
+if ( isset( $_GET['object_id'] ) ) {
+    $get_object_id = absint( wp_unslash( $_GET['object_id'] ) );
+}
+
+if ( $get_object_id > 0 ) {
     update_user_meta(
         $current_user_id,
         'br_current_object_id',
-        (int) $_GET['object_id']
+        $get_object_id
     );
 }
 
@@ -46,8 +52,8 @@ if ( empty($objects) ) {
 }
 
 $saved_object_id   = (int) get_user_meta($current_user_id, 'br_current_object_id', true);
-$current_object_id = isset($_GET['object_id']) && (int) $_GET['object_id'] > 0
-    ? (int) $_GET['object_id']
+$current_object_id = $get_object_id > 0
+    ? $get_object_id
     : ( $saved_object_id ?: (int) $objects[0]['id'] );
 /* ============================================================
  * Object timezone (из БД)
@@ -76,17 +82,26 @@ $bookings = br_get_bookings([
 ]);
 
 $event_types = $wpdb->get_results(
-    "SELECT id, label FROM {$wpdb->prefix}1br_event_types WHERE object_id = {$current_object_id}",
+    $wpdb->prepare(
+        "SELECT id, label FROM {$wpdb->prefix}1br_event_types WHERE object_id = %d",
+        $current_object_id
+    ),
     OBJECT_K
 );
 
 $participants = $wpdb->get_results(
-    "SELECT id, label FROM {$wpdb->prefix}1br_visitors_count WHERE object_id = {$current_object_id}",
+    $wpdb->prepare(
+        "SELECT id, label FROM {$wpdb->prefix}1br_visitors_count WHERE object_id = %d",
+        $current_object_id
+    ),
     OBJECT_K
 );
 
 $services = $wpdb->get_results(
-    "SELECT id, label FROM {$wpdb->prefix}1br_services WHERE object_id = {$current_object_id}",
+    $wpdb->prepare(
+        "SELECT id, label FROM {$wpdb->prefix}1br_services WHERE object_id = %d",
+        $current_object_id
+    ),
     OBJECT_K
 );
 

@@ -20,11 +20,15 @@ function br_submit_booking() {
 
     global $wpdb;
         check_ajax_referer('br_submit_booking', '_wpnonce');
-	if (empty($_POST['privacy_consent'])) {
-        wp_send_json_error([
-            'message' => 'Consent required'
-        ]);
-    }
+	$privacy_consent = isset( $_POST['privacy_consent'] )
+    ? sanitize_text_field( wp_unslash( $_POST['privacy_consent'] ) )
+    : '';
+
+if ( '' === $privacy_consent ) {
+    wp_send_json_error([
+        'message' => 'Consent required'
+    ]);
+}
 
     require_once __DIR__ . '/booking-data-builder.php';
 
@@ -33,7 +37,8 @@ function br_submit_booking() {
        1. СБОР И НОРМАЛИЗАЦИЯ ДАННЫХ
        ============================================================ */
 
-    $booking_data = br_build_booking_data($_POST);
+    $raw_post = wp_unslash( $_POST );
+$booking_data = br_build_booking_data( $raw_post );
 	if (!is_email($booking_data['client_email'])) {
     wp_send_json_error([
         'message' => 'Invalid email'
@@ -161,8 +166,8 @@ function br_update_booking_status() {
         wp_send_json_error('Missing params');
     }
 
-    $booking_id = (int) $_POST['booking_id'];
-    $status     = sanitize_text_field($_POST['status']);
+    $booking_id = absint( wp_unslash( $_POST['booking_id'] ) );
+$status     = sanitize_text_field( wp_unslash( $_POST['status'] ) );
 
     if ( $booking_id <= 0 ) {
         wp_send_json_error('Invalid booking_id');
